@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_restful import Resource, Api
-from json import loads, dumps
+from json import loads
 
 from PredictProductsCount import PredictProductsCount
 from PredictProductsPrice import PredictProductsPrice
@@ -9,20 +9,18 @@ app = Flask(__name__)
 api = Api(app)
 
 
-class Hello(Resource):
+class ApiInfo(Resource):
 
     def get(self):
-        api_info = open('apiInfo.txt', 'r')
+        api_info = open('apiInfo/apiInfo.txt', 'r', encoding='utf-8')
         return jsonify({'message': api_info.readlines()})
-
-    # Corresponds to POST request
-    def post(self):
-        data = request.get_json()  # status code
-        print(data)
-        return data
 
 
 class PredictPrice(Resource):
+
+    def get(self):
+        api_info = open('apiInfo/predictPrice.txt', 'r', encoding='utf-8')
+        return jsonify({'message': api_info.readlines()})
 
     def post(self):
         year = request.get_json()['year']
@@ -35,6 +33,10 @@ class PredictPrice(Resource):
 
 class PredictFood(Resource):
 
+    def get(self):
+        api_info = open('apiInfo/predictFood.txt', 'r', encoding='utf-8')
+        return jsonify({'message': api_info.readlines()})
+
     def post(self):
         year = request.get_json()['year']
         peoples = request.get_json()['peoples']
@@ -44,10 +46,9 @@ class PredictFood(Resource):
         return parsed
 
 
-api.add_resource(Hello, '/')
+api.add_resource(ApiInfo, '/')
 api.add_resource(PredictPrice, '/predict-price')
 api.add_resource(PredictFood, '/predict-food')
 
-# driver function
 if __name__ == '__main__':
     app.run(debug=True)
