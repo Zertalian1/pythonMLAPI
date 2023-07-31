@@ -38,10 +38,21 @@ class PredictFood(Resource):
         return jsonify({'message': api_info.readlines()})
 
     def post(self):
-        year = request.get_json()['year']
-        peoples = request.get_json()['peoples']
+        params = loads(request.data)
+        year = None
+        peoples = None
+        products = None
+        if 'year' in params:
+            year = request.get_json()['year']
+        if 'peoples' in params:
+            peoples = request.get_json()['peoples']
+        if 'products' in params:
+            products = list(map(int, request.get_json()['products']))
         model_service = PredictProductsCount()
-        result = model_service.predict_results(year, peoples)
+        if products is None:
+            result = model_service.predict_results_all_prod(year, peoples)
+        else:
+            result = model_service.predict_results_selected_prod(products, year, peoples)
         parsed = loads(result.to_json(orient="split"))
         return parsed
 
