@@ -16,7 +16,7 @@ class PredictProductsCount:
     def __init__(self):
         self.model = self.__restore_models()
         self.all_data = self.__load_all_data()
-        self.scaler = self.__restore_scalers()
+        self.scalers = self.__restore_scalers()
         self.allProdNames = self.__load_all_names()
 
     @staticmethod
@@ -43,11 +43,11 @@ class PredictProductsCount:
 
     @staticmethod
     def __restore_scalers():
-        scaler = MinMaxScaler()
         files_names = [f for f in listdir('./data/prodCountAllData/') if isfile(join('./data/prodCountAllData/', f))]
         files_names = sorted(files_names, key=cmp_to_key(locale.strcoll))
         scalers = []
         for file_name in files_names:
+            scaler = MinMaxScaler()
             scalers.append(
                 scaler.fit(
                     pd.read_csv(
@@ -67,8 +67,12 @@ class PredictProductsCount:
         return all_data
 
     def predict_results_all_prod(self, year=None, peoples=None):
-        columns = self.allProdNames
-        pred = []
+        columns = []
+        for prod in self.allProdNames:
+            if prod == 'Bovine Meat Production':
+                continue
+            columns.append(prod)
+        pred = [[]]
         for i in range(0, len(self.all_data)):
             t_data = self.all_data[i]
             if year is not None:
@@ -77,18 +81,25 @@ class PredictProductsCount:
             if peoples is not None:
                 t_data.at[0, 'Peoples'] = peoples
                 t_data['Peoples'] = t_data['Peoples'].astype(np.int64)
-            data = pd.DataFrame(data=self.scaler[i].transform(t_data))
-            pred.append(self.model[i].predict(data))
-        print(pred)
+            data = pd.DataFrame(data=self.scalers[i].transform(t_data))
+            prediction = self.model[i].predict(data)
+            if i == 2:
+                pred[0].append(prediction[0][0])
+                continue
+            pred[0].append(prediction[0][0])
+            pred[0].append(prediction[0][1])
         return pd.DataFrame(pred, columns=columns)
 
     def predict_results_selected_prod(self, products, year=None, peoples=None):
         columns = []
         for i in products:
+            if i == 2:
+                columns.append(self.allProdNames[2 * i])
+                continue
             columns.append(self.allProdNames[2 * i])
             columns.append(self.allProdNames[2 * i + 1])
         pred = [[]]
-        for i in range(0,len(self.all_data)):
+        for i in products:
             t_data = self.all_data[i]
             if year is not None:
                 t_data.at[0, 'Year'] = year
@@ -96,9 +107,11 @@ class PredictProductsCount:
             if peoples is not None:
                 t_data.at[0, 'Peoples'] = peoples
                 t_data['Peoples'] = t_data['Peoples'].astype(np.int64)
-            data = pd.DataFrame(data=self.scaler[i].transform(t_data))
+            data = pd.DataFrame(data=self.scalers[i].transform(t_data))
             prediction = self.model[i].predict(data)
+            if i == 2:
+                pred[0].append(prediction[0][0])
+                continue
             pred[0].append(prediction[0][0])
             pred[0].append(prediction[0][1])
-        print(pred)
         return pd.DataFrame(pred, columns=columns)
